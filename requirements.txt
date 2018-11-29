@@ -1,0 +1,7 @@
+numba
+scipy
+sklearn
+numpy
+matplotlib
+seaborn
+ipython
