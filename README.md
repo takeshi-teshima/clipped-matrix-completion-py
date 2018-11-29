@@ -1,2 +1,2 @@
-# clipped-matrix-completion
+# clipped-matrix-completion-py
 Implementation of Clipped Matrix Completion: A Remedy for Ceiling Effects (AAAI 2019)
