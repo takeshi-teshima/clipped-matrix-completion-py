@@ -1,9 +1,9 @@
-function [retVal,h_U,h_S,h_V]=h_function(X, C)
-%% $W^{(t)} = 1\{X^{(t)} < C\}$
-W = X < C;
+function [retVal,h_U,h_S,h_V]=h_function(sol_M, C, lambda3)
+W = sol_M >= C;
 
-%% $svd_obj(\X) = X \odot W^{(t)} + C (1 - W^{(t)})$
-svd_obj=X.*W + C * (1 - W);
+% svd_obj=W.*(sol_M-C);
+svd_obj=sol_M - W.*(sol_M - C);
+
 [h_U,h_S,h_V]=svdecon(svd_obj);
 
-retVal=sum(diag(h_S));
+retVal=lambda3*sum(diag(h_S));

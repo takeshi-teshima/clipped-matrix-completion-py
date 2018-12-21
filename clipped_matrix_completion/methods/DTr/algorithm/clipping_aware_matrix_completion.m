@@ -1,27 +1,18 @@
 function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
-                                                lambda1, lambda2, T, ...
-                                                eta_t, decay_rate, epsilon, ...
-                                                clip_or_sqhinge, ...
-                                                initialization, scale,stop_eps)
-    %% DTr minimization based on subgradient descent
-    % Min {f(X) + \lambda_1 \|X\|_* + \lambda_2 \|W(X)\hadamard(X - C)\|_*}
-    %
+                                                lambda1, lambda2, lambda3, T, ...
+                                                eta_t, decay_rate, clip_or_hinge,initialization)
 
-    if(strcmp(clip_or_sqhinge, 'sqhinge'))
-        update = @update_basic;
-        get_obj_value = @get_value_basic;
-    end
-
-    C = double(C);
-    eta_t = double(eta_t);
-    eta_zero = eta_t;
-    lambda1 = double(lambda1);
-    lambda2 = double(lambda2);
-    decay_rate = double(decay_rate);
-    scale = double(scale);
-    stop_eps = double(stop_eps);
+    f_function = @f_function_hinge;
+    f_derivative = @f_derivative_hinge;
 
     % M_path contains M
+    C = double(C);
+    eta_t = double(eta_t);
+    lambda1 = double(lambda1);
+    lambda2 = double(lambda2);
+    lambda3 = double(lambda3);
+    decay_rate = double(decay_rate);
+
     load(M_path);
     load(Omega_M_path);
 
@@ -32,51 +23,38 @@ function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
     elseif(strcmp(initialization, 'ones'))
         sol_M= ones(n,d);
     elseif(strcmp(initialization, 'large'))
-        sol_M=(C + scale) * ones(n,d);
+        sol_M=C * ones(n,d);
     end
 
     R_C = (M == C);
 
-    [h_ret,h_U,h_S,h_V]=h_function(sol_M, C);
-
-    old_X = 0;
-    rel_scale = scale * numel(M);
+    [h_ret,h_U,h_S,h_V]=h_function(sol_M, C,lambda3);
 
     for i=1:T
-        %% Update
-        [sol_M,trnrm] = update(sol_M, C, M, Omega_M, R_C, h_U, h_S, h_V, lambda1, lambda2, eta_t, epsilon);
-
-        %% Evaluate
-        % Calculate current objective value
         if (mod(i,10)==0)
             disp(["Round: " num2str(i)]);
-            [obj, f_value, trnrm_term, h_ret_term] = get_obj_value(sol_M, C, M, Omega_M, R_C, trnrm, lambda1, lambda2);
-
-            fprintf('%f = %f + %f + %f', obj, f_value, trnrm_term, h_ret_term);
-            fprintf('\n');
         end
+        subgradient=f_derivative(sol_M, C, M,Omega_M,lambda1, R_C)+h_derivative(sol_M, C,lambda3,h_U,h_S,h_V);
+        svd_obj=sol_M-eta_t*subgradient;
+        [U,S,V]=svdecon(svd_obj);
+        S=diag(S)-(eta_t*lambda2);
+        num_keep=nnz(S>1e-8);
 
-        %% Update
-        eta_t=eta_t*decay_rate;
+        sol_M=U(:,1:num_keep)*diag(S(1:num_keep))*V(:,1:num_keep)';
+
+        [h_ret,h_U,h_S,h_V]=h_function(sol_M, C, lambda3);
+        tr_X = lambda2*sum(S(1:num_keep));
+        f_value = f_function(sol_M, C, M,Omega_M,lambda1, R_C);
+        obj=tr_X+f_value+h_ret;
+
+        fprintf('%f = %f + %f + %f', obj, tr_X, f_value, h_ret);
+        fprintf('\n');
+
+        if eta_t>40
+            eta_t=eta_t*decay_rate;
+        else
+            eta_t=eta_t;
+        end
     end
 
-    disp(["Done"]);
-end
-function [sol_M,trnrm]=update_basic(sol_M, C, M, Omega_M, R_C, h_U, h_S, h_V, lambda1, ...
-                                    lambda2, eta_t, epsilon)
-    % Take gradient of f and h
-    df = f_derivative_sqhinge(sol_M, C, M,Omega_M, R_C);
-    dh = h_subgrad(sol_M, C,h_U,h_S,h_V);
-    subgradient = df + lambda2 * dh;
-
-    % Take gradient of \|X\|_*
-    svd_obj = sol_M - eta_t * subgradient;
-    [sol_M, trnrm] = shrink_trnrm(svd_obj, eta_t, lambda1, epsilon);
-end
-function [obj, f_value, trnrm_term, h_ret_term]=get_value_basic(sol_M, C, M, Omega_M, R_C, trnrm, lambda1, lambda2)
-    [h_ret, h_U, h_S, h_V] = h_function(sol_M, C);
-    f_value = f_function_sqhinge(sol_M, C, M,Omega_M, R_C);
-    trnrm_term = lambda1 * trnrm;
-    h_ret_term = lambda2 * h_ret;
-    obj = f_value + trnrm_term + h_ret_term;
-end
+    disp(["Fine"]);
