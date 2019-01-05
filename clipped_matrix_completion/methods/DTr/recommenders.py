@@ -9,7 +9,7 @@ class DoubleTrCMFRecommender(Recommender):
         self.pred = clipping_aware_matrix_completion(
             R, self.censoring_threshold, self.lambda1, self.lambda2,
             self.lambda3, self.max_iter, self.eta_t, self.decay_rate,
-            self.loss_type, self.initialization)
+            self.loss_type, self.initialization, self.initial_margin)
         self.P = 'Parametrization is X'
         self.Q = 'Parametrization is X'
 

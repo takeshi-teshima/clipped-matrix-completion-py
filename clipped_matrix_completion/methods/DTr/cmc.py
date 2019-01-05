@@ -20,7 +20,8 @@ def clipping_aware_matrix_completion(R,
                                      eta_t=100,
                                      decay_rate=0.99,
                                      loss_type='clip',
-                                     initialization='zeros'):
+                                     initialization='zeros',
+                                     initial_margin=1.):
 
     eng = matlab.engine.start_matlab()
     eng.cd(dir_file_path + '/' + 'algorithm')
@@ -31,7 +32,7 @@ def clipping_aware_matrix_completion(R,
     time.sleep(1)  # to avoid "*.mat not found" error
     M_hat = eng.clipping_aware_matrix_completion(
         M_path, Omega_M_path, clipping_threshold, lambda1, lambda2, lambda3, T,
-        eta_t, decay_rate, loss_type, initialization)
+        eta_t, decay_rate, loss_type, initialization, initial_margin)
     os.remove(M_path)
     os.remove(Omega_M_path)
 

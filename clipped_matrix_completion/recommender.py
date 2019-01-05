@@ -20,6 +20,7 @@ class Recommender(BaseEstimator):
                  lambda1=None,
                  lambda2=None,
                  lambda3=None,
+                 initial_margin=None,
                  eta_t=None,
                  decay_rate=None,
                  loss_type=None,
@@ -47,6 +48,7 @@ class Recommender(BaseEstimator):
         self.lambda1 = lambda1
         self.lambda2 = lambda2
         self.lambda3 = lambda3
+        self.initial_margin = initial_margin
         self.loss_type = loss_type
         self.eta_t = eta_t
         self.decay_rate = decay_rate

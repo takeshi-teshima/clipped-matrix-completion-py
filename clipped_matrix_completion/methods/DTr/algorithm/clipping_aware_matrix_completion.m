@@ -1,7 +1,11 @@
 function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
                                                 lambda1, lambda2, lambda3, T, ...
-                                                eta_t, decay_rate, clip_or_hinge,initialization)
+                                                eta_t, decay_rate, ...
+                                                clip_or_hinge,initialization,initialMargin)
 
+    %% DTr minimization based on subgradient descent
+    % Min_X {\lambda_1 f(X) + \lambda_2 \|X\|_* + \lambda_3 \|X - W(X_old)\hadamard(X - C)\|_*}
+    %
     f_function = @f_function_hinge;
     f_derivative = @f_derivative_hinge;
 
@@ -12,6 +16,7 @@ function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
     lambda2 = double(lambda2);
     lambda3 = double(lambda3);
     decay_rate = double(decay_rate);
+    initialMargin = double(initialMargin);
 
     load(M_path);
     load(Omega_M_path);
@@ -23,7 +28,7 @@ function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
     elseif(strcmp(initialization, 'ones'))
         sol_M= ones(n,d);
     elseif(strcmp(initialization, 'large'))
-        sol_M=C * ones(n,d);
+        sol_M=(C+initialMargin) * ones(n,d);
     end
 
     R_C = (M == C);
