@@ -5,7 +5,7 @@ import numpy as np
 from clipped_matrix_completion.recommender import Recommender
 
 
-class ALSUVFroFroMFRecommender(Recommender):
+class FroMCRecommender(Recommender):
     def factorize(self, R):
         R = R.copy()
         P, Q = censoring_aware_low_rank_approx(
@@ -27,7 +27,7 @@ class ALSUVFroFroMFRecommender(Recommender):
         return self.P @ self.Q.T
 
 
-class ALSUVFroFroMFWithIgnoreRecommender(Recommender):
+class FroMCWithIgnoreRecommender(Recommender):
     def factorize(self, R):
         R = R.copy()
         R[R == self.censoring_threshold] = np.nan
@@ -51,7 +51,7 @@ class ALSUVFroFroMFWithIgnoreRecommender(Recommender):
         return self.P @ self.Q.T
 
 
-class ALSUVFroFroCMFRecommender(Recommender):
+class FroCMCRecommender(Recommender):
     def factorize(self, R):
         R = R.copy()
         P, Q = censoring_aware_low_rank_approx(
@@ -76,7 +76,7 @@ class ALSUVFroFroCMFRecommender(Recommender):
         return self.P @ self.Q.T
 
 
-class SparseALSUVFroFroCMFRecommender(Recommender):
+class SparseFroCMCRecommender(Recommender):
     def factorize(self, R):
         R = R.copy()
         P, Q = cmc_sparse(
@@ -101,7 +101,7 @@ class SparseALSUVFroFroCMFRecommender(Recommender):
         return self.P @ self.Q.T
 
 
-class ALSUVFroFroCMFRecommenderWithoutNumba(Recommender):
+class FroCMCRecommenderWithoutNumba(Recommender):
     def factorize(self, R):
         R = R.copy()
         P, Q = censoring_aware_low_rank_approx_without_numba(

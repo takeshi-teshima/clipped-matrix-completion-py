@@ -1,5 +1,5 @@
 function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
-                                                lambda1, lambda2, lambda3, T, ...
+                                                lossScalingFactor, lambda1, lambda2, T, ...
                                                 eta_t, decay_rate, ...
                                                 clip_or_hinge,initialization,initialMargin)
 
@@ -12,9 +12,9 @@ function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
     % M_path contains M
     C = double(C);
     eta_t = double(eta_t);
-    lambda1 = double(lambda1);
-    lambda2 = double(lambda2);
-    lambda3 = double(lambda3);
+    lossScalingFactor = double(lossScalingFactor);
+    lambda1 = lossScalingFactor * double(lambda1);
+    lambda2 = lossScalingFactor * double(lambda2);
     decay_rate = double(decay_rate);
     initialMargin = double(initialMargin);
 
@@ -33,23 +33,23 @@ function sol_M=clipping_aware_matrix_completion(M_path, Omega_M_path, C, ...
 
     R_C = (M == C);
 
-    [h_ret,h_U,h_S,h_V]=h_function(sol_M, C,lambda3);
+    [h_ret,h_U,h_S,h_V]=h_function(sol_M, C,lambda2);
 
     for i=1:T
         if (mod(i,10)==0)
             disp(["Round: " num2str(i)]);
         end
-        subgradient=f_derivative(sol_M, C, M,Omega_M,lambda1, R_C)+h_derivative(sol_M, C,lambda3,h_U,h_S,h_V);
+        subgradient=f_derivative(sol_M, C, M,Omega_M,lossScalingFactor, R_C)+h_derivative(sol_M, C,lambda2,h_U,h_S,h_V);
         svd_obj=sol_M-eta_t*subgradient;
         [U,S,V]=svdecon(svd_obj);
-        S=diag(S)-(eta_t*lambda2);
+        S=diag(S)-(eta_t*lambda1);
         num_keep=nnz(S>1e-8);
 
         sol_M=U(:,1:num_keep)*diag(S(1:num_keep))*V(:,1:num_keep)';
 
-        [h_ret,h_U,h_S,h_V]=h_function(sol_M, C, lambda3);
-        tr_X = lambda2*sum(S(1:num_keep));
-        f_value = f_function(sol_M, C, M,Omega_M,lambda1, R_C);
+        [h_ret,h_U,h_S,h_V]=h_function(sol_M, C, lambda2);
+        tr_X = lambda1*sum(S(1:num_keep));
+        f_value = f_function(sol_M, C, M,Omega_M,lossScalingFactor, R_C);
         obj=tr_X+f_value+h_ret;
 
         fprintf('%f = %f + %f + %f', obj, tr_X, f_value, h_ret);
