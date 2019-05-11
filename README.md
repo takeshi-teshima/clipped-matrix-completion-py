@@ -19,6 +19,7 @@ For quantitative experiments, see demo repository (to appear).
 # Requirements
 - This implementation of DTr-CMC requires MATLAB engine.
 
+<!--
 # TODO
 - [ ] Add links here
 - [ ] Add link to AAAI paper
@@ -27,3 +28,4 @@ For quantitative experiments, see demo repository (to appear).
 - [ ] Add documentation
 - [ ] Add Matlab-free implementation
 - [ ] Write down all dependencies
+-->
